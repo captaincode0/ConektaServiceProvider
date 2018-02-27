@@ -79,7 +79,8 @@
 		 * @inheritdoc
 		 */
 		public function isInvalid($to_validate){
-			return array_key_exists(self::ERROR_KEY, $to_validate)
+			return is_array($to_validate)
+					&& array_key_exists(self::ERROR_KEY, $to_validate)
 					|| array_key_exists(self::ERRORS_KEY, $to_validate);
 		}
 
@@ -245,8 +246,6 @@
 			try{
 				$source = $customer->createPaymentSource($source_data);
 
-				$customer->payment_sources[0]->update(array_merge(["id" => $source->id], $source_data));
-
 				if($is_default)
 					$customer->update([
 						"default_payment_source_id" => $source->id
@@ -339,5 +338,36 @@
 
 				return $this->_buildUknownMessage();
 			}
+		}
+
+		/**
+		 * [getCustomerSources get all customer sources using the customer unique identifier]
+		 * @param  string $customer_id 	[customer unique identifier]
+		 * @return array              	[all customer sources]
+		 * @throws Exception 			[when conekta Handler can't handle the current error]
+		 * @throws Handler				[Conekta base exception executed when one API-operation fails]
+		 */
+		public function getCustomerSources($customer_id){
+			$customer = $this->getCustomer($customer_id);
+
+			if($this->isInvalid($customer_id))
+				return $customer;
+
+			$source_index = 0;
+			$sources = [
+				"sources" => [],
+				"default" => []
+			];
+			
+			foreach($customer->payment_sources as $source){
+				if($source->id != $customer->defaultPaymentSourceId)
+					$sources["sources"][] = $customer->payment_sources[$source_index];
+				else
+					$sources["default"][] = $customer->payment_sources[$source_index]; 
+
+				++$source_index;
+			}
+
+			return $sources;
 		}
 	}

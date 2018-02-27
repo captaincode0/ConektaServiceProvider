@@ -24,7 +24,7 @@
 		 * @inheritdoc
 		 */
 		public function register(Application $app){
-			$app["conekta"] = $app->share(function() use($app){
+			$app["service.conekta"] = $app->share(function() use($app){
 				return new ConektaServiceProvider($app, $app["conekta.options"]["test_key"], $app["conekta.options"]["live_key"], $app["conekta.options"]["mode"]);
 			});
 		}
