@@ -8,6 +8,7 @@
 
 	use Silex\Application;
 	use Silex\ServiceProviderInterface;
+	use Silex\Provider\Conekta\ConektaService;
 
 	/**
 	 * @class 			ConektaServiceProvider
@@ -25,7 +26,11 @@
 		 */
 		public function register(Application $app){
 			$app["service.conekta"] = $app->share(function() use($app){
-				return new ConektaServiceProvider($app, $app["conekta.options"]["test_key"], $app["conekta.options"]["live_key"], $app["conekta.options"]["mode"]);
+				$conekta_service = new ConektaService($app, $app["conekta.options"]["test_key"], $app["conekta.options"]["live_key"], $app["conekta.options"]["mode"]);
+
+				$conekta_service->setApiKey();
+
+				return $conekta_service;
 			});
 		}
 

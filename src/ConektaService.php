@@ -38,6 +38,11 @@
 		const LOGGER = "monolog";
 
 		/**
+		 * Global consts
+		 */
+		const IS_DEFAULT_SOURCE = true;
+
+		/**
 		 * [$test_key conekta private test key]
 		 * @var string
 		 */
@@ -145,8 +150,8 @@
 		 * @param  string $log [line to be added to the current logfile]
 		 */
 		private function _addErrorLog($log){
-			if($app[self::LOGGER])
-				$app[self::LOGGER]->addError($log);
+			if($this->app[self::LOGGER])
+				$this->app[self::LOGGER]->addError($log);
 		}
 
 		///////////////////////
@@ -237,7 +242,7 @@
 		 * @throws Exception 			[when conekta Handler can't handle the current error]
 		 * @throws Handler				[Conekta base exception executed when one API-operation fails]
 		 */
-		public function addCustomerSource($customer_id, $source_data, $is_default){
+		public function addCustomerSource($customer_id, $source_data, $is_default=false){
 			$customer = $this->getCustomer($customer_id);
 
 			if($this->isInvalid($customer))
@@ -369,5 +374,68 @@
 			}
 
 			return $sources;
+		}
+
+		///////////////////////////
+		// Subscription handling //
+		///////////////////////////
+	
+		/**
+		 * [createSubscription creates one subscription with one plan identifier]
+		 * @param  string $customer_id 	[conekta customer unique identifier]
+		 * @param  string $plan_id     	[plan unique identifier]
+		 * @return Subscription        	[subscription freshly-created]
+		 * @throws Exception 			[when conekta Handler can't handle the current error]
+		 * @throws Handler				[Conekta base exception executed when one API-operation fails]
+		 */
+		public function createSubscription($customer_id, $plan_id){
+			try{
+				$customer = $this->getCustomer($customer_id);
+
+				if($this->isInvalid($customer))
+					return $customer;
+
+				$customer->createSubscription([
+					"plan" => $plan_id
+				]);
+
+				return $customer->subscription;
+			}catch(Handler $error){
+				$this->_addErrorLog($this->_buildErrorLog($error));
+
+				return $this->_buildHumanReadableMessage($error);
+			}
+			catch(\Exception $ex){
+				$this->_addErrorLog($this->_buildUknownErrorLog($ex));
+
+				return $this->_buildUknownMessage();
+			}
+		}
+
+		/**
+		 * [getSubscription retrieves one subscription by its unique identifier]
+		 * @param  string $customer_id [subscription unique identifier]
+		 * @return Subscription            [subscription retrieved from Conekta]
+		 * @throws Exception 			[when conekta Handler can't handle the current error]
+		 * @throws Handler				[Conekta base exception executed when one API-operation fails]
+		 */
+		public function getSubscription($customer_id){
+			try{
+				$customer = $this->getCustomer($customer_id);
+
+				if($this->isInvalid($customer))
+					return $customer;
+
+				return $customer->subscription;
+			}catch(Handler $error){
+				$this->_addErrorLog($this->_buildErrorLog($error));
+
+				return $this->_buildHumanReadableMessage($error);
+			}
+			catch(\Exception $ex){
+				$this->_addErrorLog($this->_buildUknownErrorLog($ex));
+
+				return $this->_buildUknownMessage();
+			}
 		}
 	}
